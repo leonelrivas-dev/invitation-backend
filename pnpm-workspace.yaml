@@ -1,4 +1,5 @@
-packeges: '.'
+packeges:
+  - '.'
 allowBuilds:
   '@nestjs/core': true
   '@prisma/engines': true
