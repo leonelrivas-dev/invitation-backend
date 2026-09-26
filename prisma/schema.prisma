@@ -1,0 +1,72 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model admin_users {
+  id                   String                 @id @db.Uuid
+  email                String                 @unique(map: "uq_admin_user_email") @db.VarChar(255)
+  password_hash        String
+  created_at           DateTime               @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime               @default(now()) @db.Timestamptz(6)
+  admin_refresh_tokens admin_refresh_tokens[]
+  events               events[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model invitations {
+  id              String            @id @db.Uuid
+  name            String            @db.VarChar(150)
+  slug            String            @unique(map: "uq_invitation_slug") @db.VarChar(150)
+  phone           String            @db.VarChar(30)
+  allowed_seats   Int
+  confirmed_seats Int               @default(0)
+  status          invitation_status @default(PENDING)
+  message_sent_at DateTime?         @db.Timestamptz(6)
+  created_at      DateTime          @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime          @default(now()) @db.Timestamptz(6)
+  event_id        String            @db.Uuid
+  events          events            @relation(fields: [event_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_invitations_event")
+
+  @@index([phone], map: "idx_invitations_phone")
+  @@index([status], map: "idx_invitations_status")
+}
+
+model admin_refresh_tokens {
+  id            String      @id @db.Uuid
+  admin_user_id String      @db.Uuid
+  token_hash    String      @unique(map: "uq_admin_refresh_tokens_token_hash") @db.VarChar(64)
+  expires_at    DateTime    @db.Timestamptz(6)
+  revoked_at    DateTime?   @db.Timestamptz(6)
+  created_at    DateTime    @default(now()) @db.Timestamptz(6)
+  admin_users   admin_users @relation(fields: [admin_user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_admin_refresh_tokens_admin_user")
+
+  @@index([admin_user_id], map: "idx_admin_refresh_tokens_admin_user_id")
+}
+
+model events {
+  id            String        @id @db.Uuid
+  name          String        @db.VarChar(150)
+  slug          String        @unique(map: "uq_event_slug") @db.VarChar(150)
+  event_date    DateTime      @db.Date
+  event_time    DateTime      @db.Time(6)
+  venue         String        @db.VarChar(250)
+  created_at    DateTime      @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime      @default(now()) @db.Timestamptz(6)
+  admin_user_id String        @db.Uuid
+  admin_users   admin_users   @relation(fields: [admin_user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_events_admin_user")
+  invitations   invitations[]
+
+  @@index([admin_user_id], map: "idx_events_admin_user_id")
+}
+
+enum invitation_status {
+  PENDING
+  CONFIRMED
+  DECLINED
+}
