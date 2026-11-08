@@ -17,7 +17,7 @@ async function bootstrap() {
   app.useGlobalFilters(new GlobalExceptionFilter());
 
   app.enableCors({
-    origin: 'project-one-react-production.up.railway.app',
+    origin: 'https://project-one-react-production.up.railway.app',
   });
 
   const port = process.env.PORT ?? 3000;
