@@ -11,10 +11,13 @@ export class DeleteInvitationHandler implements ICommandHandler<DeleteInvitation
   async execute(command: DeleteInvitationCommand): Promise<void> {
     const id = InvitationId.from(command.id);
 
-    const invitation = await this.invitationRepository.findById(id);
+    const invitation = await this.invitationRepository.findById(
+      id,
+      command.adminUserId,
+    );
 
     if (!invitation) throw new InvitationNotFoundError(command.id);
 
-    await this.invitationRepository.delete(id);
+    await this.invitationRepository.delete(id, command.adminUserId);
   }
 }

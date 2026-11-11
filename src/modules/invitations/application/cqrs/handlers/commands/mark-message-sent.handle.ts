@@ -10,7 +10,10 @@ export class MarkMessageSentHandle implements ICommandHandler<MarkMessageSentCom
 
   async execute(command: MarkMessageSentCommand): Promise<void> {
     const id = InvitationId.from(command.id);
-    const invitation = await this.invitationRepository.findById(id);
+    const invitation = await this.invitationRepository.findById(
+      id,
+      command.adminUserId,
+    );
 
     if (!invitation) throw new InvitationNotFoundError(command.id);
 

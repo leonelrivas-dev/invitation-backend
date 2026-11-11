@@ -6,8 +6,10 @@ export class GetInvitationsQuery extends Query<{
   total: number;
 }> {
   constructor(
+    public readonly adminUserId: string,
     public readonly page: number,
     public readonly limit: number,
+    public readonly eventId?: string,
   ) {
     super();
   }

@@ -24,6 +24,7 @@ export class GenerateWhatsAppLinkHandler implements IQueryHandler<GenerateWhatsA
   async execute(query: GenerateWhatsAppLinkQuery): Promise<string> {
     const invitation = await this.invitationRepository.findById(
       InvitationId.from(query.invitationId),
+      query.adminUserId,
     );
 
     if (!invitation) {

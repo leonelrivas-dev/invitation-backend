@@ -10,7 +10,7 @@ export interface InvitationStatistics {
 }
 
 export class GetInvitationStatisticsQuery extends Query<InvitationStatistics> {
-  constructor() {
+  constructor(public readonly adminUserId: string) {
     super();
   }
 }
