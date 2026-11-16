@@ -5,13 +5,18 @@ import { InvitationSlug } from 'src/modules/invitations/domain/value-objects/inv
 export abstract class InvitationRepository {
   abstract save(invitation: Invitation): Promise<void>;
   abstract update(invitation: Invitation): Promise<void>;
-  abstract findAll(params: { skip: number; take: number }): Promise<{
+  abstract findAll(params: {
+    adminUserId: string;
+    eventId?: string;
+    skip: number;
+    take: number;
+  }): Promise<{
     items: Invitation[];
     total: number;
   }>;
-  abstract findById(id: InvitationId): Promise<Invitation | null>;
+  abstract findById(id: InvitationId, adminUserId: string): Promise<Invitation | null>;
   abstract findBySlug(slug: InvitationSlug): Promise<Invitation | null>;
-  abstract getStatistics(): Promise<{
+  abstract getStatistics(adminUserId: string): Promise<{
     totalInvitations: number;
     pendingInvitations: number;
     confirmedInvitations: number;
@@ -20,5 +25,5 @@ export abstract class InvitationRepository {
     totalConfirmedSeats: number;
   }>;
   abstract existsBySlug(slug: InvitationSlug): Promise<boolean>;
-  abstract delete(id: InvitationId): Promise<void>;
+  abstract delete(id: InvitationId, adminUserId: string): Promise<void>;
 }

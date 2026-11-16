@@ -16,6 +16,8 @@ export class GetInvitationsHandler implements IQueryHandler<GetInvitationsQuery>
     const skip = (page - 1) * limit;
 
     return this.ivnitationRepository.findAll({
+      adminUserId: query.adminUserId,
+      eventId: query.eventId,
       skip,
       take: limit,
     });

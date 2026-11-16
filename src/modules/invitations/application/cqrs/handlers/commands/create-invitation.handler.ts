@@ -5,12 +5,25 @@ import { InvitationSlugAlreadyExistsError } from 'src/modules/invitations/domain
 import { InvitationRepository } from 'src/modules/invitations/domain/repositories/invitation.repository';
 import { InvitationSlug } from 'src/modules/invitations/domain/value-objects/invitation-slug';
 import { Phone } from 'src/modules/invitations/domain/value-objects/phone';
+import { EventRepository } from 'src/modules/events/domain/repositories/event.repository';
+import { EventId } from 'src/modules/events/domain/value-objects/event-id';
+import { EventNotFoundError } from 'src/modules/events/domain/errors/event-not-found.error';
 
 @CommandHandler(CreateInvitationCommand)
 export class CreateInvitationHandler implements ICommandHandler<CreateInvitationCommand> {
-  constructor(private readonly invitationRepository: InvitationRepository) {}
+  constructor(
+    private readonly invitationRepository: InvitationRepository,
+    private readonly eventRepository: EventRepository,
+  ) {}
 
   async execute(command: CreateInvitationCommand): Promise<void> {
+    const event = await this.eventRepository.findById(
+      EventId.from(command.eventId),
+      command.adminUserId,
+    );
+
+    if (!event) throw new EventNotFoundError();
+
     const slug = InvitationSlug.from(command.slug);
 
     const slugAlreadyExists =

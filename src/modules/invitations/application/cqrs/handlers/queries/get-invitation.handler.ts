@@ -11,7 +11,10 @@ export class GetInvitationHandler implements IQueryHandler<GetInvitationQuery> {
 
   async execute(query: GetInvitationQuery): Promise<Invitation> {
     const id = InvitationId.from(query.id);
-    const invitation = await this.invitationRepository.findById(id);
+    const invitation = await this.invitationRepository.findById(
+      id,
+      query.adminUserId,
+    );
 
     if (!invitation) throw new InvitationNotFoundError(query.id);
 

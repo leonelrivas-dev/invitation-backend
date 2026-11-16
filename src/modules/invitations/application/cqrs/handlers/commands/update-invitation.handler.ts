@@ -11,7 +11,10 @@ export class UpdateInvitationHandler implements ICommandHandler<UpdateInvitation
 
   async execute(command: UpdateInvitationCommand): Promise<void> {
     const id = InvitationId.from(command.id);
-    const invitation = await this.invitationRepository.findById(id);
+    const invitation = await this.invitationRepository.findById(
+      id,
+      command.adminUserId,
+    );
 
     if (!invitation) throw new InvitationNotFoundError(command.id);
 

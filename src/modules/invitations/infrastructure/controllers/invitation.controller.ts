@@ -84,9 +84,13 @@ export class InvitationController {
   @UseGuards(JwtAuthGuard)
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  async create(@Body() body: CreateInvitationDto): Promise<void> {
+  async create(
+    @Req() req: AuthenticatedRequest,
+    @Body() body: CreateInvitationDto,
+  ): Promise<void> {
     await this.commandBus.execute(
       new CreateInvitationCommand(
+        req.user.id,
         body.eventId,
         body.name,
         body.slug,
@@ -98,15 +102,20 @@ export class InvitationController {
 
   @UseGuards(JwtAuthGuard)
   @Get('statistics')
-  async statistics() {
-    return this.queryBus.execute(new GetInvitationStatisticsQuery());
+  async statistics(@Req() req: AuthenticatedRequest) {
+    return this.queryBus.execute(new GetInvitationStatisticsQuery(req.user.id));
   }
 
   @UseGuards(JwtAuthGuard)
   @Get()
-  async findAll(@Query('page') page = '1', @Query('limit') limit = '20') {
+  async findAll(
+    @Req() req: AuthenticatedRequest,
+    @Query('eventId') eventId?: string,
+    @Query('page') page = '1',
+    @Query('limit') limit = '20',
+  ) {
     const result = await this.queryBus.execute(
-      new GetInvitationsQuery(Number(page), Number(limit)),
+      new GetInvitationsQuery(req.user.id, Number(page), Number(limit), eventId),
     );
 
     return {
@@ -121,8 +130,13 @@ export class InvitationController {
 
   @UseGuards(JwtAuthGuard)
   @Get(':id')
-  async findById(@Param('id') id: string): Promise<InvitationResponseDto> {
-    const invitation = await this.queryBus.execute(new GetInvitationQuery(id));
+  async findById(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') id: string,
+  ): Promise<InvitationResponseDto> {
+    const invitation = await this.queryBus.execute(
+      new GetInvitationQuery(req.user.id, id),
+    );
 
     return InvitationResponseDto.fromDomain(invitation);
   }
@@ -131,26 +145,41 @@ export class InvitationController {
   @Patch(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   async update(
+    @Req() req: AuthenticatedRequest,
     @Param('id') id: string,
     @Body() body: UpdateInvitationDto,
   ): Promise<void> {
     await this.commandBus.execute(
-      new UpdateInvitationCommand(id, body.name, body.phone, body.allowedSeats),
+      new UpdateInvitationCommand(
+        req.user.id,
+        id,
+        body.name,
+        body.phone,
+        body.allowedSeats,
+      ),
     );
   }
 
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async delete(@Param('id') id: string): Promise<void> {
-    await this.commandBus.execute(new DeleteInvitationCommand(id));
+  async delete(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') id: string,
+  ): Promise<void> {
+    await this.commandBus.execute(new DeleteInvitationCommand(req.user.id, id));
   }
 
   @UseGuards(JwtAuthGuard)
   @Patch(':id/message-sent')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async markMessageSent(@Param('id') id: string): Promise<void> {
-    await this.commandBus.execute(new MarkMessageSentCommand(id));
+  async markMessageSent(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') id: string,
+  ): Promise<void> {
+    await this.commandBus.execute(
+      new MarkMessageSentCommand(req.user.id, id),
+    );
   }
 
   @UseGuards(JwtAuthGuard)

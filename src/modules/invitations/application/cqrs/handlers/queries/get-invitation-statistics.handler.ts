@@ -12,6 +12,6 @@ export class GetInvitationStatisticsHandler implements IQueryHandler<GetInvitati
   async execute(
     query: GetInvitationStatisticsQuery,
   ): Promise<InvitationStatistics> {
-    return this.invitationRepository.getStatistics();
+    return this.invitationRepository.getStatistics(query.adminUserId);
   }
 }

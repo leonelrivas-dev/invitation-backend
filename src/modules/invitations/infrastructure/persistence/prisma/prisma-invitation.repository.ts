@@ -45,19 +45,37 @@ export class PrismaInvitationRepository implements InvitationRepository {
     });
   }
 
-  async findAll(params: { skip: number; take: number }): Promise<{
+  async findAll(params: {
+    adminUserId: string;
+    eventId?: string;
+    skip: number;
+    take: number;
+  }): Promise<{
     items: Invitation[];
     total: number;
   }> {
     const [models, total] = await Promise.all([
       this.prisma.invitations.findMany({
+        where: {
+          ...(params.eventId ? { event_id: params.eventId } : {}),
+          events: {
+            admin_user_id: params.adminUserId,
+          },
+        },
         skip: params.skip,
         take: params.take,
         orderBy: {
           created_at: 'desc',
         },
       }),
-      this.prisma.invitations.count(),
+      this.prisma.invitations.count({
+        where: {
+          ...(params.eventId ? { event_id: params.eventId } : {}),
+          events: {
+            admin_user_id: params.adminUserId,
+          },
+        },
+      }),
     ]);
 
     return {
@@ -66,10 +84,13 @@ export class PrismaInvitationRepository implements InvitationRepository {
     };
   }
 
-  async findById(id: InvitationId): Promise<Invitation | null> {
-    const model = await this.prisma.invitations.findUnique({
+  async findById(id: InvitationId, adminUserId: string): Promise<Invitation | null> {
+    const model = await this.prisma.invitations.findFirst({
       where: {
         id: id.toString(),
+        events: {
+          admin_user_id: adminUserId,
+        },
       },
     });
 
@@ -90,7 +111,7 @@ export class PrismaInvitationRepository implements InvitationRepository {
     return InvitationMapper.toDomain(model);
   }
 
-  async getStatistics(): Promise<{
+  async getStatistics(adminUserId: string): Promise<{
     totalInvitations: number;
     pendingInvitations: number;
     confirmedInvitations: number;
@@ -105,27 +126,33 @@ export class PrismaInvitationRepository implements InvitationRepository {
       declinedInvitations,
       seats,
     ] = await Promise.all([
-      this.prisma.invitations.count(),
+      this.prisma.invitations.count({
+        where: { events: { admin_user_id: adminUserId } },
+      }),
 
       this.prisma.invitations.count({
         where: {
           status: 'PENDING',
+          events: { admin_user_id: adminUserId },
         },
       }),
 
       this.prisma.invitations.count({
         where: {
           status: 'CONFIRMED',
+          events: { admin_user_id: adminUserId },
         },
       }),
 
       this.prisma.invitations.count({
         where: {
           status: 'DECLINED',
+          events: { admin_user_id: adminUserId },
         },
       }),
 
       this.prisma.invitations.aggregate({
+        where: { events: { admin_user_id: adminUserId } },
         _sum: {
           allowed_seats: true,
           confirmed_seats: true,
@@ -156,10 +183,13 @@ export class PrismaInvitationRepository implements InvitationRepository {
     return invitation !== null;
   }
 
-  async delete(id: InvitationId): Promise<void> {
-    await this.prisma.invitations.delete({
+  async delete(id: InvitationId, adminUserId: string): Promise<void> {
+    await this.prisma.invitations.deleteMany({
       where: {
         id: id.toString(),
+        events: {
+          admin_user_id: adminUserId,
+        },
       },
     });
   }
